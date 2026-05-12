@@ -895,25 +895,54 @@ function renderChequeList(lista) {
     <div class="cheque-row">
       <div>
         <div class="cheque-mes">${c.mes}</div>
-        <div style="font-size:12px;color:rgba(255,255,255,.3);margin-top:3px;">${c.nomeArquivo || "arquivo.pdf"}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.3);margin-top:3px;">
+          ${c.nomeArquivo || "arquivo.pdf"}
+        </div>
       </div>
+
       <div class="cheque-actions">
-        <button class="btn-sm btn-sm-teal" onclick="visualizarContraCheque('${c.arquivo}')">
-          <i class="fa-regular fa-eye"></i> Visualizar
-        </button>
-        <button class="btn-sm btn-sm-blue" onclick="baixarPDF('${c.arquivo}')">
-          <i class="fa-solid fa-download"></i> Baixar
-        </button>
+
+        <!-- CHECKBOX DE CIÊNCIA -->
         <label class="ciencia-label" style="${c.visualizado ? 'color:var(--success);' : ''}">
-          <input type="checkbox" ${c.visualizado ? "checked disabled" : `onchange="marcarCiencia(${c.id})"`}>
+          <input 
+            type="checkbox"
+            ${c.visualizado ? "checked" : ""}
+            onchange="toggleCiencia(this, ${c.id})"
+          >
+
           ${c.visualizado
-            ? `<i class="fa-solid fa-circle-check" style="color:var(--success);font-size:13px;"></i> Ciente em ${c.dataVisualizacao}`
+            ? `<i class="fa-solid fa-circle-check" style="color:var(--success);font-size:13px;"></i> Ciência confirmada`
             : "Confirmar ciência"}
         </label>
+
+        <!-- BOTÃO VISUALIZAR -->
+        <button 
+          class="btn-sm btn-sm-teal"
+          id="viewBtn-${c.id}"
+          onclick="visualizarContraCheque('${c.arquivo}')"
+          ${!c.visualizado ? "disabled" : ""}
+          style="${!c.visualizado ? 'opacity:.4;cursor:not-allowed;' : ''}"
+        >
+          <i class="fa-regular fa-eye"></i> Visualizar
+        </button>
+
+        <!-- BOTÃO BAIXAR -->
+        <button 
+          class="btn-sm btn-sm-blue"
+          id="downloadBtn-${c.id}"
+          onclick="baixarPDF('${c.arquivo}')"
+          ${!c.visualizado ? "disabled" : ""}
+          style="${!c.visualizado ? 'opacity:.4;cursor:not-allowed;' : ''}"
+        >
+          <i class="fa-solid fa-download"></i> Baixar
+        </button>
+
       </div>
     </div>
   `).join("");
 }
+
+
 
 function marcarCiencia(chequeId) {
   const data = loadData();
@@ -926,6 +955,39 @@ function marcarCiencia(chequeId) {
   saveData(data);
   toast("Ciência registrada com sucesso!", "success");
   renderColaborador(usuarioAtual);
+}
+
+function toggleCiencia(checkbox, chequeId) {
+  const viewBtn = document.getElementById(`viewBtn-${chequeId}`);
+  const downloadBtn = document.getElementById(`downloadBtn-${chequeId}`);
+
+  if (checkbox.checked) {
+
+    // habilita os botões
+    viewBtn.disabled = false;
+    downloadBtn.disabled = false;
+
+    viewBtn.style.opacity = "1";
+    downloadBtn.style.opacity = "1";
+
+    viewBtn.style.cursor = "pointer";
+    downloadBtn.style.cursor = "pointer";
+
+    // registra ciência
+    marcarCiencia(chequeId);
+
+  } else {
+
+    // desabilita novamente
+    viewBtn.disabled = true;
+    downloadBtn.disabled = true;
+
+    viewBtn.style.opacity = ".4";
+    downloadBtn.style.opacity = ".4";
+
+    viewBtn.style.cursor = "not-allowed";
+    downloadBtn.style.cursor = "not-allowed";
+  }
 }
 
 /* ────────────────────────────────────
