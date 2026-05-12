@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Contra Cheques — IECPN</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;1,300&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+/* ═══════════════════════════════════════
+   VARIÁVEIS & RESET
+═══════════════════════════════════════ */
+:root {
+  --navy:    #0b1f3a;
+  --navy2:   #122848;
+  --navy3:   #1a3560;
+  --teal:    #0e8c72;
+  --teal-l:  #13b090;
+  --gold:    #c8a84b;
+  --white:   #ffffff;
+  --muted:   rgba(255,255,255,.45);
+  --border:  rgba(255,255,255,.08);
+  --ibg:     rgba(255,255,255,.06);
+  --ibd:     rgba(255,255,255,.12);
+  --ifocus:  rgba(14,140,114,.45);
+  --danger:  #e5484d;
+  --success: #30a46c;
+  --warn:    #f59e0b;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; }
+body {
+  font-family:'Figtree', sans-serif;
+  background: var(--navy);
+  color: var(--white);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background:
+    radial-gradient(ellipse 900px 600px at 110% 10%, rgba(14,140,114,.10) 0%, transparent 70%),
+    radial-gradient(ellipse 600px 500px at -10% 80%, rgba(11,31,58,.8) 0%, transparent 70%);
+  pointer-events:none; z-index:0;
+}
+.geo-lines {
+  position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden;
+}
+.geo-lines svg { width:100%; height:100%; opacity:.05; }
+
+/* ═══════════════════════════════════════
+   TELA DE LOGIN (split)
+═══════════════════════════════════════ */
+#shell-login {
+  position:relative; z-index:1;
+  display:flex; flex-direction:column; min-height:100vh;
+}
+.split { flex:1; display:flex; align-items:stretch; }
+
+.panel-left {
+  flex:1; display:flex; flex-direction:column; justify-content:space-between;
+  padding:56px 64px;
+  background:linear-gradient(160deg, var(--navy2) 0%, var(--navy) 100%);
+  border-right:1px solid var(--border);
+}
+.inst-badge {
+  display:inline-flex; align-items:center; gap:10px;
+  background:rgba(200,168,75,.08); border:1px solid rgba(200,168,75,.22);
+  padding:7px 16px; border-radius:100px;
+  font-size:12px; letter-spacing:1.5px; text-transform:uppercase;
+  color:var(--gold); font-weight:500; width:fit-content;
+  animation:fadeIn .6s ease both;
+}
+.left-body { flex:1; display:flex; flex-direction:column; justify-content:center; }
+.left-body h1 {
+  font-family:'Fraunces', serif;
+  font-size:clamp(34px,3.2vw,52px); font-weight:300;
+  line-height:1.1; letter-spacing:-.5px;
+  margin:36px 0 22px;
+  animation:fadeUp .7s .1s ease both;
+}
+.left-body h1 em { font-style:italic; color:var(--teal-l); }
+.left-body > p {
+  font-size:15px; font-weight:300; color:var(--muted);
+  line-height:1.75; max-width:420px;
+  animation:fadeUp .7s .2s ease both;
+}
+.feature-list { list-style:none; display:flex; flex-direction:column; gap:12px; margin-top:38px; animation:fadeUp .7s .3s ease both; }
+.feature-list li { display:flex; align-items:center; gap:12px; font-size:14px; color:rgba(255,255,255,.5); font-weight:300; }
+.feature-list li .dot { width:7px; height:7px; border-radius:50%; background:var(--teal-l); flex-shrink:0; box-shadow:0 0 8px rgba(14,140,114,.5); }
+.left-footer { font-size:12px; color:rgba(255,255,255,.2); border-top:1px solid var(--border); padding-top:22px; line-height:1.7; animation:fadeIn .7s .4s ease both; }
+
+.panel-right {
+  width:480px; flex-shrink:0;
+  display:flex; flex-direction:column; justify-content:center;
+  padding:56px 52px;
+  background:rgba(255,255,255,.02);
+}
+.form-head { margin-bottom:36px; animation:fadeUp .6s ease both; }
+.system-mark { display:flex; align-items:center; gap:12px; margin-bottom:26px; }
+.mark-icon {
+  width:44px; height:44px; border-radius:12px;
+  background:linear-gradient(135deg, var(--teal), #0a7060);
+  display:flex; align-items:center; justify-content:center; font-size:18px;
+  box-shadow:0 0 20px rgba(14,140,114,.3);
+}
+.mark-text .name { font-weight:600; font-size:15px; }
+.mark-text .sub  { font-size:12px; color:rgba(255,255,255,.3); margin-top:1px; }
+.form-head h2 {
+  font-family:'Fraunces',serif; font-size:28px; font-weight:300; letter-spacing:-.3px; margin-bottom:7px;
+}
+.form-head p { font-size:14px; color:var(--muted); font-weight:300; }
+
+/* TABS */
+.tabs {
+  display:flex; background:rgba(255,255,255,.04);
+  border:1px solid var(--border); border-radius:12px; padding:4px;
+  margin-bottom:28px; animation:fadeUp .6s .05s ease both;
+}
+.tab-btn {
+  flex:1; padding:10px 0; border:none; background:none;
+  font-family:'Figtree',sans-serif; font-size:14px; font-weight:500;
+  color:rgba(255,255,255,.4); border-radius:9px; cursor:pointer; transition:.25s;
+}
+.tab-btn.active { background:var(--navy3); color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.3); }
+
+/* CAMPOS */
+.field { margin-bottom:18px; }
+.field label {
+  display:block; font-size:11px; font-weight:600;
+  letter-spacing:1.2px; text-transform:uppercase;
+  color:rgba(255,255,255,.32); margin-bottom:7px;
+}
+.input-wrap { position:relative; }
+.input-wrap > i.ic {
+  position:absolute; left:15px; top:50%; transform:translateY(-50%);
+  color:rgba(255,255,255,.22); font-size:14px; pointer-events:none;
+  transition:.25s;
+}
+.input-wrap input {
+  width:100%; padding:13px 14px 13px 42px;
+  background:var(--ibg); border:1px solid var(--ibd);
+  border-radius:12px;
+  font-family:'Figtree',sans-serif; font-size:15px; font-weight:300; color:#fff;
+  outline:none; transition:.25s;
+}
+.input-wrap input::placeholder { color:rgba(255,255,255,.2); }
+.input-wrap input:focus { border-color:var(--teal); background:rgba(14,140,114,.08); box-shadow:0 0 0 3px var(--ifocus); }
+.input-wrap:focus-within > i.ic { color:var(--teal-l); }
+.eye-btn {
+  position:absolute; right:13px; top:50%; transform:translateY(-50%);
+  background:none; border:none; color:rgba(255,255,255,.25);
+  cursor:pointer; padding:4px; font-size:14px; transition:.2s;
+}
+.eye-btn:hover { color:rgba(255,255,255,.5); }
+.field-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; }
+.remember { display:flex; align-items:center; gap:8px; font-size:13px; color:rgba(255,255,255,.38); cursor:pointer; user-select:none; }
+.remember input[type=checkbox] {
+  appearance:none; width:16px; height:16px; border-radius:5px;
+  border:1px solid rgba(255,255,255,.18); background:var(--ibg);
+  cursor:pointer; transition:.2s; position:relative; flex-shrink:0;
+}
+.remember input[type=checkbox]:checked { background:var(--teal); border-color:var(--teal); }
+.remember input[type=checkbox]:checked::after {
+  content:''; position:absolute; inset:0;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath stroke='%23fff' stroke-width='2' fill='none' d='M3 8l3.5 3.5L13 5'/%3E%3C/svg%3E") center/12px no-repeat;
+}
+.forgot { font-size:13px; color:rgba(14,176,144,.7); text-decoration:none; transition:.2s; }
+.forgot:hover { color:var(--teal-l); }
+.admin-toggle {
+  display:flex; align-items:center; gap:8px;
+  background:rgba(255,255,255,.04); border:1px solid var(--border);
+  border-radius:10px; padding:10px 14px;
+  font-size:13px; color:rgba(255,255,255,.38); cursor:pointer;
+  user-select:none; transition:.25s; margin-bottom:18px;
+}
+.admin-toggle:hover { background:rgba(255,255,255,.07); color:rgba(255,255,255,.6); }
+.admin-toggle.ativo { background:rgba(200,168,75,.1); border-color:rgba(200,168,75,.3); color:var(--gold); }
+.admin-toggle input[type=checkbox] {
+  appearance:none; width:16px; height:16px; border-radius:5px;
+  border:1px solid rgba(255,255,255,.18); background:var(--ibg); cursor:pointer;
+  transition:.2s; position:relative; flex-shrink:0;
+}
+.admin-toggle.ativo input[type=checkbox] { background:var(--gold); border-color:var(--gold); }
+.admin-toggle.ativo input[type=checkbox]::after {
+  content:''; position:absolute; inset:0;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath stroke='%23fff' stroke-width='2' fill='none' d='M3 8l3.5 3.5L13 5'/%3E%3C/svg%3E") center/12px no-repeat;
+}
+
+/* BOTÕES */
+.btn-primary {
+  width:100%; padding:14px;
+  background:linear-gradient(135deg, var(--teal), #0a7060);
+  border:none; border-radius:12px;
+  font-family:'Figtree',sans-serif; font-size:15px; font-weight:600; color:#fff;
+  cursor:pointer; transition:.25s; letter-spacing:.2px;
+  display:flex; align-items:center; justify-content:center; gap:9px;
+  box-shadow:0 6px 22px rgba(14,140,114,.28);
+}
+.btn-primary:hover { background:linear-gradient(135deg,var(--teal-l),var(--teal)); transform:translateY(-1px); box-shadow:0 10px 30px rgba(14,140,114,.38); }
+.btn-primary:active { transform:translateY(0); }
+.btn-ghost {
+  width:100%; padding:13px;
+  background:var(--ibg); border:1px solid var(--border);
+  border-radius:12px; font-family:'Figtree',sans-serif; font-size:14px;
+  color:rgba(255,255,255,.42); cursor:pointer; transition:.25s;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  text-decoration:none;
+}
+.btn-ghost:hover { background:rgba(255,255,255,.08); color:rgba(255,255,255,.65); border-color:rgba(255,255,255,.18); }
+.divider { display:flex; align-items:center; gap:12px; margin:20px 0; font-size:12px; color:rgba(255,255,255,.18); }
+.divider::before, .divider::after { content:''; flex:1; height:1px; background:rgba(255,255,255,.07); }
+
+/* ═══════════════════════════════════════
+   TOPBAR (pós login)
+═══════════════════════════════════════ */
+#topbar {
+  position:relative; z-index:10;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 32px;
+  height:60px;
+  background:rgba(10,20,40,.85);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+}
+.topbar-brand { display:flex; align-items:center; gap:12px; }
+.topbar-icon {
+  width:36px; height:36px; border-radius:10px;
+  background:linear-gradient(135deg,var(--teal),#0a7060);
+  display:flex; align-items:center; justify-content:center; font-size:14px;
+}
+.topbar-name { font-weight:600; font-size:14px; }
+.topbar-sub  { font-size:11px; color:rgba(255,255,255,.3); }
+.topbar-right { display:flex; align-items:center; gap:14px; }
+.topbar-user {
+  display:flex; align-items:center; gap:9px;
+  padding:6px 12px; border-radius:100px;
+  background:rgba(255,255,255,.05); border:1px solid var(--border);
+  font-size:13px; font-weight:500; color:rgba(255,255,255,.7);
+}
+.topbar-user .av {
+  width:28px; height:28px; border-radius:50%;
+  background:linear-gradient(135deg,var(--teal),#0a7060);
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:700;
+}
+.btn-sair {
+  display:flex; align-items:center; gap:7px;
+  background:rgba(229,72,77,.1); border:1px solid rgba(229,72,77,.22);
+  color:rgba(229,72,77,.8); padding:7px 14px; border-radius:100px;
+  font-size:13px; font-weight:500; cursor:pointer; transition:.25s;
+}
+.btn-sair:hover { background:rgba(229,72,77,.2); color:#e5484d; }
+
+/* ═══════════════════════════════════════
+   CONTEÚDO PRINCIPAL
+═══════════════════════════════════════ */
+#main-content {
+  position:relative; z-index:1;
+  max-width:1000px; margin:0 auto; padding:40px 28px 60px;
+}
+.page-title {
+  font-family:'Fraunces',serif; font-size:clamp(24px,2.5vw,34px); font-weight:300;
+  letter-spacing:-.3px; margin-bottom:6px;
+  animation:fadeUp .6s ease both;
+}
+.page-title em { font-style:italic; color:var(--teal-l); }
+.page-sub { font-size:14px; color:var(--muted); font-weight:300; margin-bottom:32px; animation:fadeUp .6s .08s ease both; }
+
+/* CARDS DE RESUMO */
+.stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:32px; animation:fadeUp .6s .12s ease both; }
+.stat-card {
+  background:rgba(255,255,255,.04); border:1px solid var(--border);
+  border-radius:16px; padding:20px 18px;
+}
+.stat-card .val { font-family:'Fraunces',serif; font-size:28px; font-weight:300; color:var(--teal-l); }
+.stat-card .lbl { font-size:12px; color:rgba(255,255,255,.35); margin-top:4px; }
+
+/* SEÇÕES */
+.section-card {
+  background:rgba(255,255,255,.03); border:1px solid var(--border);
+  border-radius:20px; padding:28px; margin-bottom:22px;
+  animation:fadeUp .6s .15s ease both;
+}
+.section-card h4 {
+  font-family:'Fraunces',serif; font-size:17px; font-weight:400; margin-bottom:18px;
+  display:flex; align-items:center; gap:10px;
+}
+.section-card h4 .badge-icon {
+  width:32px; height:32px; border-radius:9px;
+  background:rgba(14,140,114,.15); border:1px solid rgba(14,140,114,.25);
+  display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0;
+}
+
+/* CAMPOS (painel) */
+.field-inline { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+.field-inline label { font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:rgba(255,255,255,.3); }
+.field-inline input,
+.field-inline select {
+  width:100%; padding:11px 14px;
+  background:var(--ibg); border:1px solid var(--ibd);
+  border-radius:10px; font-family:'Figtree',sans-serif; font-size:14px; color:#fff;
+  outline:none; transition:.25s;
+}
+.field-inline input:focus,
+.field-inline select:focus { border-color:var(--teal); background:rgba(14,140,114,.07); box-shadow:0 0 0 3px var(--ifocus); }
+.field-inline input::placeholder { color:rgba(255,255,255,.2); }
+.field-inline select option { background:#122848; color:#fff; }
+.field-inline input[type=file] { padding:9px 14px; }
+
+.field-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+/* SEARCH BAR */
+.search-wrap { position:relative; margin-bottom:18px; }
+.search-wrap i { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,.25); font-size:14px; }
+.search-wrap input {
+  width:100%; padding:11px 14px 11px 40px;
+  background:var(--ibg); border:1px solid var(--ibd);
+  border-radius:10px; font-family:'Figtree',sans-serif; font-size:14px; color:#fff;
+  outline:none; transition:.25s;
+}
+.search-wrap input:focus { border-color:var(--teal); box-shadow:0 0 0 3px var(--ifocus); }
+.search-wrap input::placeholder { color:rgba(255,255,255,.2); }
+
+/* TABELA */
+.tbl-wrap { overflow-x:auto; border-radius:12px; }
+table {
+  width:100%; border-collapse:collapse; font-size:13px;
+}
+thead th {
+  text-align:left; padding:10px 14px;
+  font-size:11px; font-weight:600; letter-spacing:.8px; text-transform:uppercase;
+  color:rgba(255,255,255,.3); border-bottom:1px solid var(--border);
+}
+tbody tr { border-bottom:1px solid rgba(255,255,255,.04); transition:.2s; }
+tbody tr:hover { background:rgba(255,255,255,.03); }
+tbody td { padding:12px 14px; color:rgba(255,255,255,.7); vertical-align:middle; }
+
+/* STATUS BADGES */
+.badge {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:4px 10px; border-radius:100px; font-size:12px; font-weight:600;
+}
+.badge-ok  { background:rgba(48,164,108,.15); color:#30a46c; border:1px solid rgba(48,164,108,.25); }
+.badge-pend{ background:rgba(229,72,77,.12);  color:#e5484d; border:1px solid rgba(229,72,77,.22); }
+
+/* BOTÕES TABELA */
+.btn-sm {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:5px 10px; border-radius:8px; font-size:12px; font-weight:500; font-family:'Figtree',sans-serif;
+  border:none; cursor:pointer; transition:.2s;
+}
+.btn-sm-teal  { background:rgba(14,140,114,.18); color:var(--teal-l); }
+.btn-sm-teal:hover  { background:rgba(14,140,114,.3); }
+.btn-sm-blue  { background:rgba(59,130,246,.15); color:#60a5fa; }
+.btn-sm-blue:hover  { background:rgba(59,130,246,.25); }
+.btn-sm-red   { background:rgba(229,72,77,.12); color:#e5484d; }
+.btn-sm-red:hover   { background:rgba(229,72,77,.22); }
+.btn-sm-gray  { background:rgba(255,255,255,.07); color:rgba(255,255,255,.5); }
+.btn-sm-gray:hover  { background:rgba(255,255,255,.12); }
+
+/* CHEQUE ITEM (colaborador) */
+.cheque-list { display:flex; flex-direction:column; gap:12px; }
+.cheque-row {
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+  background:rgba(255,255,255,.04); border:1px solid var(--border);
+  border-radius:14px; padding:16px 20px; transition:.25s;
+}
+.cheque-row:hover { background:rgba(14,140,114,.05); border-color:rgba(14,140,114,.2); }
+.cheque-mes { font-family:'Fraunces',serif; font-size:16px; font-weight:400; }
+.cheque-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.ciencia-label {
+  display:flex; align-items:center; gap:7px;
+  font-size:13px; padding:6px 12px; border-radius:8px;
+  background:rgba(255,255,255,.05); cursor:pointer; user-select:none;
+  transition:.2s;
+}
+.ciencia-label:hover { background:rgba(255,255,255,.09); }
+.ciencia-label input[type=checkbox] {
+  appearance:none; width:15px; height:15px; border-radius:4px;
+  border:1px solid rgba(255,255,255,.2); background:var(--ibg); cursor:pointer; position:relative; transition:.2s; flex-shrink:0;
+}
+.ciencia-label input[type=checkbox]:checked { background:var(--teal); border-color:var(--teal); }
+.ciencia-label input[type=checkbox]:checked::after {
+  content:''; position:absolute; inset:0;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath stroke='%23fff' stroke-width='2' fill='none' d='M3 8l3.5 3.5L13 5'/%3E%3C/svg%3E") center/12px no-repeat;
+}
+
+/* DETALHE RH */
+.detalhe-rh {
+  margin-top:12px;
+  background:rgba(14,140,114,.06); border:1px solid rgba(14,140,114,.2);
+  border-radius:14px; padding:20px;
+  animation:fadeUp .3s ease both;
+}
+.detalhe-rh h5 {
+  font-family:'Fraunces',serif; font-size:15px; font-weight:400;
+  margin-bottom:14px; color:var(--teal-l);
+}
+
+/* VAZIO */
+.empty-state {
+  text-align:center; padding:40px 20px;
+  color:rgba(255,255,255,.3); font-size:14px; font-weight:300;
+}
+.empty-state i { font-size:32px; display:block; margin-bottom:12px; opacity:.4; }
+
+/* FOOTER */
+footer {
+  position:relative; z-index:1;
+  text-align:center; padding:18px;
+  font-size:11px; color:rgba(255,255,255,.15);
+  border-top:1px solid rgba(255,255,255,.04);
+}
+
+/* TOAST */
+.toast {
+  position:fixed; bottom:24px; right:24px; z-index:9999;
+  display:flex; align-items:center; gap:10px;
+  padding:13px 20px; border-radius:12px;
+  font-size:14px; font-weight:500; font-family:'Figtree',sans-serif;
+  box-shadow:0 8px 24px rgba(0,0,0,.35);
+  animation:slideUp .3s ease both;
+}
+.toast-info    { background:#1a3560; border:1px solid rgba(14,140,114,.35); color:#fff; }
+.toast-success { background:#0f3d29; border:1px solid rgba(48,164,108,.35); color:#30a46c; }
+.toast-error   { background:#3d0f11; border:1px solid rgba(229,72,77,.35); color:#e5484d; }
+
+@keyframes slideUp {
+  from { opacity:0; transform:translateY(16px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ANIMAÇÕES */
+@keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+/* RESPONSIVO */
+@media(max-width:860px){
+  .split{flex-direction:column;}
+  .panel-left{padding:36px 28px 28px;border-right:none;border-bottom:1px solid var(--border);}
+  .left-body h1{font-size:30px;margin:20px 0 14px;}
+  .feature-list,.left-footer{display:none;}
+  .panel-right{width:100%;padding:36px 28px;}
+  #topbar{padding:0 20px;}
+  #main-content{padding:28px 18px 50px;}
+  .field-grid-2{grid-template-columns:1fr;}
+}
+@media(max-width:480px){
+  .panel-left{padding:24px 20px 22px;}
+  .panel-right{padding:24px 20px;}
+  .topbar-user span{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- Geometria de fundo -->
+<div class="geo-lines">
+  <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <line x1="0" y1="900" x2="700" y2="0" stroke="white" stroke-width="1"/>
+    <line x1="200" y1="900" x2="900" y2="0" stroke="white" stroke-width=".5"/>
+    <line x1="1440" y1="0" x2="800" y2="900" stroke="white" stroke-width="1"/>
+    <line x1="1200" y1="0" x2="600" y2="900" stroke="white" stroke-width=".5"/>
+  </svg>
+</div>
+
+<!-- ──────────────────────────────────────
+     SHELL DE LOGIN
+────────────────────────────────────── -->
+<div id="shell-login">
+  <div class="split">
+    <!-- ESQUERDA -->
+    <div class="panel-left">
+      <div class="inst-badge">
+        <i class="fa-solid fa-hospital-user" style="font-size:11px;"></i>
+        Instituto Estadual do Cérebro Paulo Niemeyer
+      </div>
+      <div class="left-body">
+        <h1>Contracheques<br><em>seguros</em> e<br>acessíveis.</h1>
+        <p>Portal centralizado para consulta, download e histórico de holerites dos colaboradores do Instituto.</p>
+        <ul class="feature-list">
+          <li><span class="dot"></span>Consulta de holerites por competência</li>
+          <li><span class="dot"></span>Download em PDF seguro e autenticado</li>
+          <li><span class="dot"></span>Histórico completo de vínculos</li>
+          <li><span class="dot"></span>Confirmação de ciência integrada</li>
+        </ul>
+      </div>
+      <div class="left-footer">
+        Gerenciado pela Equipe de Tecnologia da Informação<br>
+        Instituto Estadual do Cérebro Paulo Niemeyer — Rio de Janeiro, RJ
+      </div>
+    </div>
+
+    <!-- DIREITA -->
+    <div class="panel-right">
+      <div class="form-head">
+        <div class="system-mark">
+          <div class="mark-icon"><i class="fa-regular fa-file-lines"></i></div>
+          <div class="mark-text">
+            <div class="name">Contra Cheques</div>
+            <div class="sub">Sistema Corporativo · IECPN</div>
+          </div>
+        </div>
+        <h2 id="formTitle">Acesse sua conta</h2>
+        <p id="formSub">Use suas credenciais institucionais para continuar.</p>
+      </div>
+
+      <!-- TABS -->
+      <div class="tabs">
+        <button class="tab-btn active" id="tabEntrar" onclick="setTab('login')">Entrar</button>
+        <button class="tab-btn" id="tabCadastro" onclick="setTab('cadastro')">Cadastrar-se</button>
+      </div>
+
+      <!-- FORM LOGIN -->
+      <div id="formLogin">
+        <label class="admin-toggle" id="adminToggle" onclick="toggleAdmin()">
+          <input type="checkbox" id="adminCheck">
+          <i class="fa-solid fa-shield-halved" style="font-size:13px;"></i>
+          <span id="adminToggleLabel">Sou Administrador</span>
+        </label>
+
+        <div class="field">
+          <label id="loginLabel">CPF do Colaborador</label>
+          <div class="input-wrap">
+            <i class="fa-regular fa-id-badge ic"></i>
+            <input type="text" id="loginField" placeholder="000.000.000-00" maxlength="40" autocomplete="username">
+          </div>
+        </div>
+        <div class="field">
+          <label>Senha</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-lock ic" style="font-size:12px;"></i>
+            <input type="password" id="passLogin" placeholder="••••••••" autocomplete="current-password">
+            <button class="eye-btn" type="button" onclick="toggleEye('passLogin','eyeLogin')" aria-label="Ver/ocultar">
+              <i class="fa-regular fa-eye" id="eyeLogin"></i>
+            </button>
+          </div>
+        </div>
+        <div class="field-row">
+          <label class="remember"><input type="checkbox"> Manter conectado</label>
+          <a href="#" class="forgot">Esqueci minha senha</a>
+        </div>
+        <button class="btn-primary" onclick="login()">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i> Acessar sistema
+        </button>
+        <div class="divider">ou</div>
+        <a href="mailto:ti@iecpn.rj.gov.br" class="btn-ghost">
+          <i class="fa-regular fa-circle-question"></i> Suporte da equipe de TI
+        </a>
+      </div>
+
+      <!-- FORM CADASTRO -->
+      <div id="formCadastro" style="display:none;">
+        <div class="field">
+          <label>Matrícula</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-id-card ic" style="font-size:12px;"></i>
+            <input type="text" id="cadMatricula" placeholder="Ex.: 00123456">
+          </div>
+        </div>
+        <div class="field">
+          <label>Nome Completo</label>
+          <div class="input-wrap">
+            <i class="fa-regular fa-user ic"></i>
+            <input type="text" id="cadNome" placeholder="Como consta no sistema">
+          </div>
+        </div>
+        <div class="field">
+          <label>CPF</label>
+          <div class="input-wrap">
+            <i class="fa-regular fa-id-badge ic"></i>
+            <input type="text" id="cadCPF" placeholder="000.000.000-00" maxlength="14">
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:22px;">
+          <label>Senha</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-lock ic" style="font-size:12px;"></i>
+            <input type="password" id="cadSenha" placeholder="Mínimo 6 caracteres">
+            <button class="eye-btn" type="button" onclick="toggleEye('cadSenha','eyeCad')" aria-label="Ver/ocultar">
+              <i class="fa-regular fa-eye" id="eyeCad"></i>
+            </button>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="salvarCadastro()">
+          <i class="fa-solid fa-user-plus"></i> Solicitar cadastro
+        </button>
+        <div class="divider">ou</div>
+        <a href="mailto:ti@iecpn.rj.gov.br" class="btn-ghost">
+          <i class="fa-regular fa-circle-question"></i> Suporte da equipe de TI
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <footer>© <span id="yearLogin"></span> Sistema desenvolvido pela Equipe de Tecnologia da Informação — Instituto Estadual do Cérebro Paulo Niemeyer</footer>
+</div>
+
+<!-- ──────────────────────────────────────
+     SHELL PÓS-LOGIN
+────────────────────────────────────── -->
+<div id="shell-app" style="display:none; flex-direction:column; min-height:100vh;">
+  <!-- Topbar -->
+  <div id="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-icon"><i class="fa-regular fa-file-lines"></i></div>
+      <div>
+        <div class="topbar-name">Contra Cheques</div>
+        <div class="topbar-sub">IECPN</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-user">
+        <div class="av" id="topbarAv">--</div>
+        <span id="topbarNome">Usuário</span>
+      </div>
+      <button class="btn-sair" onclick="logout()">
+        <i class="fa-solid fa-arrow-right-from-bracket" style="font-size:12px;"></i> Sair
+      </button>
+    </div>
+  </div>
+
+  <!-- Área de conteúdo dinâmico -->
+  <div id="main-content"></div>
+
+  <footer>© <span id="yearApp"></span> Sistema desenvolvido pela Equipe de Tecnologia da Informação — Instituto Estadual do Cérebro Paulo Niemeyer</footer>
+</div>
+
+<!-- ══════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════ -->
+<script>
+/* ────────────────────────────────────
+   ESTADO & STORAGE
+──────────────────────────────────── */
+const KEY = "sisou_contracheques_v12";
+let modoAdmin = false;
+let usuarioAtual = null;
+
+function defaultData() {
+  return {
+    users: [{ id: 1, username: "admin", password: "admin", role: "admin" }],
+    contracheques: []
+  };
+}
+function loadData() {
+  const data = JSON.parse(localStorage.getItem(KEY)) || defaultData();
+  if (!data.users.some(u => u.role === "admin")) {
+    data.users.push({ id: Date.now(), username: "admin", password: "admin", role: "admin" });
+    saveData(data);
+  }
+  return data;
+}
+function saveData(data) { localStorage.setItem(KEY, JSON.stringify(data)); }
+
+/* ────────────────────────────────────
+   UTILITÁRIOS
+──────────────────────────────────── */
+function limparCPF(cpf) { return (cpf || "").replace(/\D/g, ""); }
+function formatarCPF(cpf) {
+  if (!cpf) return "";
+  return cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+}
+function aplicarMascaraCPF(el) {
+  el.addEventListener("input", () => {
+    if (modoAdmin) return;
+    let v = el.value.replace(/\D/g, "").slice(0,11);
+    v = v.replace(/(\d{3})(\d)/, "$1.$2");
+    v = v.replace(/(\d{3})(\d)/, "$1.$2");
+    v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    el.value = v;
+  });
+}
+function iniciais(nome) {
+  const p = (nome||"").trim().split(" ");
+  return (p[0]?.[0]||"") + (p[1]?.[0]||p[0]?.[1]||"");
+}
+
+function toast(msg, tipo = "info") {
+  const d = document.createElement("div");
+  d.className = `toast toast-${tipo}`;
+  const icons = { info:"fa-circle-info", success:"fa-circle-check", error:"fa-circle-xmark" };
+  d.innerHTML = `<i class="fa-solid ${icons[tipo]||'fa-circle-info'}"></i> ${msg}`;
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 3200);
+}
+
+function toggleEye(inputId, iconId) {
+  const inp = document.getElementById(inputId);
+  const ico = document.getElementById(iconId);
+  if (inp.type === "password") {
+    inp.type = "text";
+    ico.classList.replace("fa-eye","fa-eye-slash");
+  } else {
+    inp.type = "password";
+    ico.classList.replace("fa-eye-slash","fa-eye");
+  }
+}
+
+/* ────────────────────────────────────
+   SHELL SWITCH
+──────────────────────────────────── */
+function mostrarApp() {
+  document.getElementById("shell-login").style.display = "none";
+  const sa = document.getElementById("shell-app");
+  sa.style.display = "flex";
+}
+function mostrarLogin() {
+  document.getElementById("shell-app").style.display = "none";
+  document.getElementById("shell-login").style.display = "flex";
+}
+
+/* ────────────────────────────────────
+   TABS DO LOGIN
+──────────────────────────────────── */
+function setTab(tab) {
+  const isLogin = tab === "login";
+  document.getElementById("tabEntrar").classList.toggle("active", isLogin);
+  document.getElementById("tabCadastro").classList.toggle("active", !isLogin);
+  document.getElementById("formLogin").style.display = isLogin ? "block" : "none";
+  document.getElementById("formCadastro").style.display = isLogin ? "none" : "block";
+  document.getElementById("formTitle").textContent = isLogin ? "Acesse sua conta" : "Criar conta";
+  document.getElementById("formSub").textContent = isLogin
+    ? "Use suas credenciais institucionais para continuar."
+    : "Preencha seus dados para solicitar acesso.";
+}
+
+/* ────────────────────────────────────
+   TOGGLE ADMIN
+──────────────────────────────────── */
+function toggleAdmin() {
+  modoAdmin = !modoAdmin;
+  const toggle = document.getElementById("adminToggle");
+  const check  = document.getElementById("adminCheck");
+  const label  = document.getElementById("adminToggleLabel");
+  const field  = document.getElementById("loginField");
+  const lbl    = document.getElementById("loginLabel");
+  check.checked = modoAdmin;
+  toggle.classList.toggle("ativo", modoAdmin);
+  if (modoAdmin) {
+    label.textContent = "Modo Administrador ativo";
+    field.placeholder = "Usuário administrador";
+    lbl.textContent   = "Usuário";
+    field.value = "";
+  } else {
+    label.textContent = "Sou Administrador";
+    field.placeholder = "000.000.000-00";
+    lbl.textContent   = "CPF do Colaborador";
+    field.value = "";
+  }
+}
+
+/* ────────────────────────────────────
+   LOGIN
+──────────────────────────────────── */
+function login() {
+  const input = document.getElementById("loginField").value.trim();
+  const pass  = document.getElementById("passLogin").value.trim();
+  const data  = loadData();
+  let user = null;
+
+  if (modoAdmin) {
+    user = data.users.find(u => u.username === input && u.password === pass && u.role === "admin");
+  } else {
+    const cpf = limparCPF(input);
+    user = data.users.find(u => u.role === "colaborador" && u.cpf === cpf && u.password === pass);
+  }
+
+  if (!user) { toast("CPF/usuário ou senha inválidos.", "error"); return; }
+
+  usuarioAtual = user;
+  const av = document.getElementById("topbarAv");
+  av.textContent = iniciais(user.username).toUpperCase();
+  document.getElementById("topbarNome").textContent = user.username.split(" ")[0];
+
+  mostrarApp();
+  if (user.role === "admin") renderAdmin(user);
+  else renderColaborador(user);
+}
+
+/* ────────────────────────────────────
+   CADASTRO
+──────────────────────────────────── */
+(function() {
+  // aplica máscara no CPF do cadastro ao carregar
+  document.addEventListener("DOMContentLoaded", () => {
+    const cpfEl = document.getElementById("cadCPF");
+    if (cpfEl) {
+      cpfEl.addEventListener("input", () => {
+        let v = cpfEl.value.replace(/\D/g,"").slice(0,11);
+        v = v.replace(/(\d{3})(\d)/,"$1.$2");
+        v = v.replace(/(\d{3})(\d)/,"$1.$2");
+        v = v.replace(/(\d{3})(\d{1,2})$/,"$1-$2");
+        cpfEl.value = v;
+      });
+    }
+    // aplica máscara no campo de login
+    const loginEl = document.getElementById("loginField");
+    if (loginEl) aplicarMascaraCPF(loginEl);
+
+    document.getElementById("yearLogin").textContent = new Date().getFullYear();
+    document.getElementById("yearApp").textContent   = new Date().getFullYear();
+  });
+})();
+
+function salvarCadastro() {
+  const matricula = document.getElementById("cadMatricula").value.trim();
+  const nome      = document.getElementById("cadNome").value.trim();
+  const cpf       = limparCPF(document.getElementById("cadCPF").value);
+  const senha     = document.getElementById("cadSenha").value.trim();
+
+  if (!matricula || !nome || !cpf || !senha) { toast("Preencha todos os campos.", "error"); return; }
+  if (!/^\d{11}$/.test(cpf)) { toast("CPF inválido. Informe 11 dígitos.", "error"); return; }
+
+  const data = loadData();
+  if (data.users.some(u => u.cpf === cpf || u.matricula === matricula)) {
+    toast("CPF ou matrícula já cadastrados.", "error"); return;
+  }
+  data.users.push({ id: Date.now(), matricula, username: nome, cpf, password: senha, role: "colaborador" });
+  saveData(data);
+  toast("Cadastro realizado com sucesso!", "success");
+  setTab("login");
+  // limpa campos
+  ["cadMatricula","cadNome","cadCPF","cadSenha"].forEach(id => document.getElementById(id).value = "");
+}
+
+/* ────────────────────────────────────
+   LOGOUT
+──────────────────────────────────── */
+function logout() {
+  usuarioAtual = null;
+  modoAdmin = false;
+  document.getElementById("adminCheck").checked = false;
+  document.getElementById("adminToggle").classList.remove("ativo");
+  document.getElementById("adminToggleLabel").textContent = "Sou Administrador";
+  document.getElementById("loginField").placeholder = "000.000.000-00";
+  document.getElementById("loginLabel").textContent = "CPF do Colaborador";
+  document.getElementById("loginField").value = "";
+  document.getElementById("passLogin").value = "";
+  mostrarLogin();
+}
+
+/* ────────────────────────────────────
+   PAINEL COLABORADOR
+──────────────────────────────────── */
+function renderColaborador(user) {
+  const data  = loadData();
+  const lista = data.contracheques.filter(c => c.userId === user.id);
+
+  const stats = {
+    total: lista.length,
+    ciente: lista.filter(c => c.visualizado).length,
+    pendente: lista.filter(c => !c.visualizado).length
+  };
+
+  document.getElementById("main-content").innerHTML = `
+    <p class="page-title">Olá, <em>${user.username.split(" ")[0]}</em></p>
+    <p class="page-sub">Matrícula: ${user.matricula || "N/A"} &nbsp;·&nbsp; Seus contracheques disponíveis abaixo.</p>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="val">${stats.total}</div><div class="lbl">Total de holerites</div></div>
+      <div class="stat-card"><div class="val" style="color:var(--success)">${stats.ciente}</div><div class="lbl">Ciência confirmada</div></div>
+      <div class="stat-card"><div class="val" style="color:var(--danger)">${stats.pendente}</div><div class="lbl">Pendentes de ciência</div></div>
+    </div>
+
+    <div class="section-card">
+      <h4><span class="badge-icon"><i class="fa-regular fa-file-lines"></i></span> Meus Contracheques</h4>
+      <div class="search-wrap">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="buscaColab" placeholder="Buscar por mês ou arquivo...">
+      </div>
+      <div class="cheque-list" id="listaCheques">${renderChequeList(lista)}</div>
+    </div>
+  `;
+
+  document.getElementById("buscaColab").addEventListener("input", e => {
+    const t = e.target.value.toLowerCase();
+    const filtrados = lista.filter(c =>
+      c.mes.toLowerCase().includes(t) || (c.nomeArquivo||"").toLowerCase().includes(t)
+    );
+    document.getElementById("listaCheques").innerHTML = renderChequeList(filtrados);
+  });
+}
+
+function renderChequeList(lista) {
+  if (!lista.length) return `
+    <div class="empty-state">
+      <i class="fa-regular fa-folder-open"></i>
+      Nenhum contracheque disponível no momento.
+    </div>`;
+
+  return lista.map(c => `
+    <div class="cheque-row">
+      <div>
+        <div class="cheque-mes">${c.mes}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.3);margin-top:3px;">${c.nomeArquivo || "arquivo.pdf"}</div>
+      </div>
+      <div class="cheque-actions">
+        <button class="btn-sm btn-sm-teal" onclick="visualizarContraCheque('${c.arquivo}')">
+          <i class="fa-regular fa-eye"></i> Visualizar
+        </button>
+        <button class="btn-sm btn-sm-blue" onclick="baixarPDF('${c.arquivo}')">
+          <i class="fa-solid fa-download"></i> Baixar
+        </button>
+        <label class="ciencia-label" style="${c.visualizado ? 'color:var(--success);' : ''}">
+          <input type="checkbox" ${c.visualizado ? "checked disabled" : `onchange="marcarCiencia(${c.id})"`}>
+          ${c.visualizado
+            ? `<i class="fa-solid fa-circle-check" style="color:var(--success);font-size:13px;"></i> Ciente em ${c.dataVisualizacao}`
+            : "Confirmar ciência"}
+        </label>
+      </div>
+    </div>
+  `).join("");
+}
+
+function marcarCiencia(chequeId) {
+  const data = loadData();
+  const c = data.contracheques.find(x => x.id === chequeId);
+  if (!c || c.visualizado) return;
+  c.visualizado = true;
+  c.dataVisualizacao = new Date().toLocaleString("pt-BR", {
+    day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit"
+  });
+  saveData(data);
+  toast("Ciência registrada com sucesso!", "success");
+  renderColaborador(usuarioAtual);
+}
+
+/* ────────────────────────────────────
+   PAINEL ADMIN
+──────────────────────────────────── */
+function renderAdmin(user) {
+  const data = loadData();
+  const colaboradores = data.users.filter(u => u.role === "colaborador");
+  const totalCheques  = data.contracheques.length;
+  const totalCientes  = data.contracheques.filter(c => c.visualizado).length;
+
+  document.getElementById("main-content").innerHTML = `
+    <p class="page-title">Painel <em>Administrativo</em></p>
+    <p class="page-sub">Gerencie colaboradores e envie contracheques.</p>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="val">${colaboradores.length}</div><div class="lbl">Colaboradores</div></div>
+      <div class="stat-card"><div class="val">${totalCheques}</div><div class="lbl">Holerites enviados</div></div>
+      <div class="stat-card"><div class="val" style="color:var(--success)">${totalCientes}</div><div class="lbl">Ciências confirmadas</div></div>
+      <div class="stat-card"><div class="val" style="color:var(--danger)">${totalCheques - totalCientes}</div><div class="lbl">Pendentes</div></div>
+    </div>
+
+    <div class="section-card">
+      <h4><span class="badge-icon"><i class="fa-solid fa-upload"></i></span> Enviar Contracheque</h4>
+      <div class="field-grid-2">
+        <div class="field-inline">
+          <label>Colaborador</label>
+          <select id="selColab">
+            <option value="">Selecione...</option>
+            ${colaboradores.map(c => `<option value="${c.id}">${c.username} (${c.matricula||"sem mat."})</option>`).join("")}
+          </select>
+        </div>
+        <div class="field-inline">
+          <label>Mês / Período</label>
+          <input type="text" id="mesCheque" placeholder="Ex.: Outubro/2025">
+        </div>
+      </div>
+      <div class="field-inline" style="margin-top:4px;">
+        <label>Arquivo PDF</label>
+        <input type="file" id="arquivoCheque" accept="application/pdf">
+      </div>
+      <button class="btn-primary" style="margin-top:16px;width:auto;padding:12px 28px;" onclick="enviarContraCheque()">
+        <i class="fa-solid fa-paper-plane"></i> Enviar contracheque
+      </button>
+    </div>
+
+    <div class="section-card">
+      <h4><span class="badge-icon"><i class="fa-solid fa-users"></i></span> Colaboradores</h4>
+      <div class="search-wrap">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="buscaAdmin" placeholder="Buscar por nome, matrícula ou CPF...">
+      </div>
+      <div id="listaColabs" style="display:none;"></div>
+      <div id="detalhesRh" style="display:none;"></div>
+    </div>
+  `;
+
+  const buscaEl   = document.getElementById("buscaAdmin");
+  const listaEl   = document.getElementById("listaColabs");
+  const detEl     = document.getElementById("detalhesRh");
+
+  buscaEl.addEventListener("input", e => {
+    const t = e.target.value.toLowerCase().trim();
+    if (!t) { listaEl.style.display = "none"; listaEl.innerHTML = ""; detEl.style.display = "none"; return; }
+    const f = colaboradores.filter(c =>
+      c.username.toLowerCase().includes(t) ||
+      (c.matricula||"").toLowerCase().includes(t) ||
+      c.cpf.includes(t.replace(/\D/g,""))
+    );
+    listaEl.innerHTML = renderTabelaColabs(f);
+    listaEl.style.display = "block";
+    detEl.style.display = "none";
+  });
+}
+
+function renderTabelaColabs(lista) {
+  if (!lista.length) return `<div class="empty-state"><i class="fa-solid fa-magnifying-glass"></i>Nenhum colaborador encontrado.</div>`;
+  return `
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th><th>Matrícula</th><th>CPF</th><th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${lista.map(u => `
+            <tr>
+              <td><strong style="font-weight:500;">${u.username}</strong></td>
+              <td>${u.matricula || "—"}</td>
+              <td style="font-family:monospace;font-size:12px;">${formatarCPF(u.cpf)}</td>
+              <td>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <button class="btn-sm btn-sm-teal" onclick="mostrarDetalhes(${u.id})">
+                    <i class="fa-solid fa-chart-bar"></i> Detalhes RH
+                  </button>
+                  <button class="btn-sm btn-sm-gray" onclick="editarColaborador(${u.id})">
+                    <i class="fa-solid fa-pen"></i> Editar
+                  </button>
+                  <button class="btn-sm btn-sm-red" onclick="excluirColaborador(${u.id})">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function mostrarDetalhes(userId) {
+  const detEl  = document.getElementById("detalhesRh");
+  const uidStr = String(userId);
+  if (detEl.dataset.uid === uidStr && detEl.style.display !== "none") {
+    detEl.style.display = "none"; detEl.innerHTML = ""; detEl.dataset.uid = ""; return;
+  }
+  const data = loadData();
+  const colab  = data.users.find(u => u.id === userId);
+  const cheques = data.contracheques.filter(c => c.userId === userId);
+
+  let rows = cheques.length
+    ? cheques.map(c => `
+        <tr>
+          <td>${c.mes}</td>
+          <td>
+            <span class="badge ${c.visualizado ? 'badge-ok' : 'badge-pend'}">
+              <i class="fa-solid ${c.visualizado ? 'fa-circle-check' : 'fa-clock'}"></i>
+              ${c.visualizado ? "Ciente" : "Pendente"}
+            </span>
+          </td>
+          <td style="font-size:12px;color:rgba(255,255,255,.45);">${c.dataVisualizacao || "—"}</td>
+          <td>
+            <button class="btn-sm btn-sm-teal" onclick="visualizarContraCheque('${c.arquivo}')">
+              <i class="fa-regular fa-eye"></i> Ver
+            </button>
+          </td>
+        </tr>`).join("")
+    : `<tr><td colspan="4" style="text-align:center;color:rgba(255,255,255,.3);padding:16px;">Nenhum contracheque enviado.</td></tr>`;
+
+  detEl.innerHTML = `
+    <div class="detalhe-rh">
+      <h5><i class="fa-solid fa-user-tie" style="margin-right:8px;"></i>${colab?.username} · ${colab?.matricula || "sem matrícula"}</h5>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Mês</th><th>Status</th><th>Data ciência</th><th>Ações</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+  detEl.style.display = "block";
+  detEl.dataset.uid = uidStr;
+  detEl.scrollIntoView({ behavior:"smooth", block:"nearest" });
+}
+
+/* ────────────────────────────────────
+   FUNÇÕES ADMIN
+──────────────────────────────────── */
+function enviarContraCheque() {
+  const data   = loadData();
+  const userId = parseInt(document.getElementById("selColab").value);
+  const mes    = document.getElementById("mesCheque").value.trim();
+  const file   = document.getElementById("arquivoCheque").files[0];
+
+  if (!userId || !mes || !file) { toast("Preencha todos os campos e selecione um PDF.", "error"); return; }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    data.contracheques.push({
+      id: Date.now(), userId, mes,
+      nomeArquivo: file.name,
+      arquivo: reader.result,
+      visualizado: false, dataVisualizacao: null
+    });
+    saveData(data);
+    toast("Contracheque enviado com sucesso!", "success");
+    renderAdmin(usuarioAtual);
+  };
+  reader.readAsDataURL(file);
+}
+
+function editarColaborador(id) {
+  const data = loadData();
+  const col  = data.users.find(u => u.id === id);
+  const novaMatricula = prompt("Nova matrícula:", col.matricula);
+  const novoNome      = prompt("Novo nome:", col.username);
+  const novoCPF       = prompt("Novo CPF (somente números):", col.cpf);
+  const novaSenha     = prompt("Nova senha:", col.password);
+  if (novoNome && novoCPF && novaSenha && novaMatricula) {
+    col.matricula = novaMatricula;
+    col.username  = novoNome;
+    col.cpf       = limparCPF(novoCPF);
+    col.password  = novaSenha;
+    saveData(data);
+    toast("Colaborador atualizado!", "success");
+    renderAdmin(usuarioAtual);
+  }
+}
+
+function excluirColaborador(id) {
+  if (!confirm("Deseja excluir este colaborador e todos os seus contracheques?")) return;
+  const data = loadData();
+  data.users        = data.users.filter(u => u.id !== id);
+  data.contracheques = data.contracheques.filter(c => c.userId !== id);
+  saveData(data);
+  toast("Colaborador removido.", "info");
+  renderAdmin(usuarioAtual);
+}
+
+/* ────────────────────────────────────
+   PDF
+──────────────────────────────────── */
+function visualizarContraCheque(dataUrl) {
+  const blob   = b64Blob(dataUrl, "application/pdf");
+  const url    = URL.createObjectURL(blob);
+  window.open(url, "_blank");
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+function baixarPDF(dataUrl) {
+  const blob  = b64Blob(dataUrl, "application/pdf");
+  const url   = URL.createObjectURL(blob);
+  const a     = document.createElement("a");
+  a.href = url; a.download = "Contra_Cheque.pdf";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+function b64Blob(b64, type) {
+  const bs = atob(b64.split(",")[1]);
+  const ab = new ArrayBuffer(bs.length);
+  const ia = new Uint8Array(ab);
+  for (let i = 0; i < bs.length; i++) ia[i] = bs.charCodeAt(i);
+  return new Blob([ab], { type });
+}
+</script>
+</body>
+</html>
